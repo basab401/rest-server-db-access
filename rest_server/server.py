@@ -65,18 +65,18 @@ def get_pw(username):
 @app.route('/')
 def index():
     ''' Main index page '''
-    return jsonify(200, 'API to store or fetch JSON data onto/from Document based databases')
+    return jsonify('API to store or fetch JSON data onto/from Document based databases', 200)
 
 @app.route('/v1')
 def v1():
     ''' Endpoints '''
-    return jsonify(200, endpoints)
+    return jsonify(endpoints, 200)
 
 @app.route('/login')
 @server_conf.auth.login_required
 def login():
     ''' login to further access other APIs '''
-    return jsonify(200, 'Hello, %s!' % server_conf.auth.username())
+    return jsonify('Hello, %s!' % server_conf.auth.username(), 200)
 
 @app.route('/v1/mongodb', methods=['GET', 'POST'])
 @server_conf.auth.login_required
@@ -96,7 +96,7 @@ def access_mongodb():
         except Exception as e:
             s_logger.error('Failed to update data: {}'.format(e))
             rc = 500
-    return jsonify(rc, result)
+    return jsonify(result, rc)
 
 
 #####################################################################
@@ -109,26 +109,24 @@ def parse_arguments():
          formatter_class=argparse.ArgumentDefaultsHelpFormatter,
          prefix_chars='-+')
 
-    parser._action_groups.pop()
     optional = parser.add_argument_group('optional arguments')
-
-    optional.add_argument(
-        '--server_port',
-        '-p',
-        default='7777',
-        help='The Port of the REST API Server')
-
     optional.add_argument(
          '--config_file',
          '-c',
          help='Path and Name for the server configuration file')
-
     optional.add_argument(
          '--verbose',
          '-v',
          action='store_true',
          help='Level of debug prints')
-
+    optional.add_argument(
+         '--mongodb_user',
+         '-u',
+         help='Mongodb cluster access userid')
+    optional.add_argument(
+         '--mongodb_pw',
+         '-p',
+         help='Mongodb cluster access password')
     return parser.parse_args()
 
 
@@ -136,11 +134,12 @@ def parse_arguments():
 # Application Main
 #####################################################################
 if __name__ == '__main__':
-    # TODO: use cli args to override config defaults
+    # Parse cli args (if any) to override config defaults
     args = parse_arguments()
     # load configuration
     app.config.from_object('config.DefaultConfig')
     ensure_prerequisites()
+    # TODO: enable ssl
     # check if running with https, using None disables the SSL usage
     context = None
     if app.config['use_ssl']:
@@ -150,16 +149,13 @@ if __name__ == '__main__':
             app.config['DEFAULT_USERID']: app.config['DEFAULT_PW']
         }
     try:
+        mongodb_userid = args.mongodb_user if args.mongodb_user else app.config['MONGODB_USER']
+        mongodb_pw = args.mongodb_pw if args.mongodb_pw else app.config['MONGODB_PW']
+        mongodb_url = "mongodb+srv://{}:{}@cluster0-pv6rr.mongodb.net/{}?retryWrites=true&w=majority".format(
+            mongodb_userid, mongodb_pw, app.config['MONGODB_DB'])
         # Create a local mongodb cluster object (www.mongodb.com)
-        mongo_url = "mongodb+srv://{}:{}@cluster0-pv6rr.mongodb.net/{}?retryWrites=true&w=majority".format(
-            app.config['MONGODB_USER'],
-            app.config['MONGODB_PW'],
-            app.config['MONGODB_DB']
-        )
         server_conf.mongodb_connobj = MongoDb(
-            mongo_url,
-            app.config['MONGODB_DB'],
-            app.config['MONGODB_COLLECTION']
+            mongodb_url, app.config['MONGODB_DB'], app.config['MONGODB_COLLECTION']
         )
         # Run the REST Server
         s_logger.info('Starting server on {}:{}.'.format(
