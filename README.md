@@ -15,22 +15,27 @@ This repo contains the source code for a Python-based REST server that allows in
 ## <a name="prerequisites">Prerequisites</a>
 
 ```
-Python3.6 or higher, Flask 1.1.1
+Primary requirements: Python3.6 or higher, Flask 1.1.1 or higher
+For details, please see requirements.txt
 ```
 
 ## <a name="use">How to use it</a>
 
-Run the application as follows.
+Start the API server as follows:
 
 
 ```bash
-python3 rest-server-db-access.py
+cd rest_server
+python3 server.py
 ```
 
 
 ```bash
-Ex: curl -XPOST -F "files[]=@/test/1.json" http://localhost:7000/query
-Ex: curl -XPOST -F "files[]=@/test/2.json" http://localhost:7000/insert
+Ex:
+curl -u <userid>:<pw> http://127.0.0.1:10443/v1/mongodb
+curl -u <userid>:<pw> -H 'Content-type: application/json' -d '{"id"}' -X GET http://127.0.0.1:10443/v1/mongodb
+curl -u <userid>:<pw> -H 'Content-type: application/json' -d '{"id":2, "test_key":"test_value"}' -X POST http://127.0.0.1:10443/v1/mongodb
+curl -u <userid>:<pw> -H 'Content-type: application/json' -d '{"id":3, "test_key":"test_value"}' -X POST http://127.0.0.1:10443/v1/mongodb 
 ```
 
 ## <a name="maintainers">Maintainers</a>
