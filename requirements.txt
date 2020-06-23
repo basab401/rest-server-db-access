@@ -12,3 +12,4 @@ six==1.13.0
 Werkzeug==0.16.0
 dnspython==1.16.0
 pymongo==3.10.1
+mongomock==3.19.0
