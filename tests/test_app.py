@@ -111,3 +111,4 @@ def test_client_post(client):
     print(response)
     assert response.content_type == mimetype
     assert response.status_code == 200
+    assert json.loads(response.data)[0] == 'mock_insert'
