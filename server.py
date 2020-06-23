@@ -57,7 +57,7 @@ def parse_arguments():
 ###############################################################################
 # Execution functions
 ###############################################################################
-def get_context(args, app):
+def get_context(app, args):
     ''' Load application configurations '''
     check_ssl(app)
     # TODO: enable ssl
@@ -67,7 +67,7 @@ def get_context(args, app):
         context = (app.config['ssl_cert'], app.config['ssl_key'])
     return context
 
-def run_rest_server(app, context):
+def run_rest_server(app, context=None):
     ''' Run the REST Server '''
     s_logger.info('Starting server on {}:{}.'.format(
         app.config['IP'], app.config['PORT']))
@@ -86,6 +86,7 @@ if __name__ == '__main__':
     try:
         # Create application instance
         app = create_app(userid=args.mongodb_user, password=args.mongodb_pw)
+        # TODO: support SSL context
         context = get_context(app, args)
         # Run the server
         run_rest_server(app, context)

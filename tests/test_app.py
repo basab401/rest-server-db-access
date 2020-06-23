@@ -112,3 +112,10 @@ def test_client_post(client):
     assert response.content_type == mimetype
     assert response.status_code == 200
     assert json.loads(response.data)[0] == 'mock_insert'
+
+
+def test_client_unauthorized(client):
+    # Test unathorized access
+    response = client.post('/v1/mongodb',
+        data=json.dumps(dummy_post_objects))
+    assert response.status_code == 401

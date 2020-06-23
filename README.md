@@ -57,6 +57,15 @@ curl -u <userid>:<pw> -H 'Content-type: application/json' -d '{"id":2, "test_key
 curl -u <userid>:<pw> -H 'Content-type: application/json' -d '{"id":3, "test_key":"test_value"}' -X POST http://127.0.0.1:10443/v1/mongodb 
 ```
 
+## <a name="TODOs">Pending work</a>
+
+* Replace hardcoded DB or Collection entities
+* Support delete method
+* Use ssl certs or keypair based authentication
+* Add support for S3 access
+* Add support for API based credential stores
+
+
 ## <a name="maintainers">Maintainer</a>
 
 * Basabjit Sengupta (basab401@yahoo.co.in)
