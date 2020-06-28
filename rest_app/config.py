@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 class DefaultConfig:
-    ALLOWED_EXTENSIONS = ['json']
+    ALLOWED_EXTENSIONS = ['json', 'txt']
 
     # Default Userid and Password
     DEFAULT_USERID = 'test'
@@ -21,11 +21,15 @@ class DefaultConfig:
     # for deployment this should be most likely set to 443
     PORT = 10443
 
-    # MONGODB Connection details
+    # MONGODB Cluster access details
     MONGODB_USER = 'basab'
     MONGODB_PW = 'xxxxxxxx'
     MONGODB_DB = 'test_db'
     MONGODB_COLLECTION = 'test_collection'
     MONGODB_URL = 'mongodb+srv://%(MONGODB_USER)s:%(MONGODB_PW)s@cluster0-pv6rr.mongodb.net/%(MONGODB_DB)s?retryWrites=true&w=majority'
 
-
+    # S3 Object store access details
+    S3_BUCKET = 'basab-test-bucket-1'
+    S3_REMOTE_UPLOAD_FOLDER = 'test-uploads-folder'
+    S3_LOCAL_UPLOAD_FOLDER = '/tmp/uploads'
+    S3_LOCAL_DOWNLOAD_FOLDER = '/tmp/downloads'

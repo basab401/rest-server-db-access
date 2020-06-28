@@ -15,3 +15,5 @@ pymongo==3.10.1
 pytest==3.3.2
 pytest-mock==1.7.1
 mongomock==3.19.0
+awscli==1.18.89
+boto3==1.14.12

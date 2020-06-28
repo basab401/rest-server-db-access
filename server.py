@@ -71,10 +71,8 @@ def run_rest_server(app, context=None):
     ''' Run the REST Server '''
     s_logger.info('Starting server on {}:{}.'.format(
         app.config['IP'], app.config['PORT']))
-    app.run(
-        host=app.config['IP'],
-        port=app.config['PORT'],
-        ssl_context=context)
+    app.run(host=app.config['IP'], port=app.config['PORT'],
+        ssl_context=context, debug=True)
 
 
 ###############################################################################

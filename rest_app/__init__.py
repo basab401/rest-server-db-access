@@ -10,9 +10,9 @@ document based DB clients to
 
 import os
 import logging
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect, send_file
 from flask_httpauth import HTTPBasicAuth
-from rest_app import mongodb
+from rest_app import mongodb, s3_access
 
 
 ##########################################################################
@@ -30,7 +30,9 @@ server_conf.auth = HTTPBasicAuth()
 endpoints = {'Endpoints': [
         '/v1',
         '/v1/mongodb',
-        '/v1/s3'
+        '/v1/s3',
+        '/v1/s3/upload',
+        '/v1/s3/download/{file_name}'
     ]}
 
 index_msg = 'Application to access Document based databases'
@@ -44,6 +46,14 @@ def get_pw(username):
         return server_conf.users.get(username)
     return None
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit(
+        '.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def ensure_dir_exists(dir_path):
+    ''' Create a direcotry path if it does not yet exist '''
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path)
 
 ##########################################################################
 # Flask application
@@ -77,11 +87,13 @@ def create_app(userid=None, password=None, test_config=None):
         ''' login to further access other APIs '''
         return jsonify('Hello, %s!' % server_conf.auth.username(), 200)
 
+
+    # Mongodb routes
     @app.route('/v1/mongodb', methods=['GET', 'POST'])
     @server_conf.auth.login_required
     def access_mongodb():
         rc = 200
-        result = {}
+        result = None
         data = request.get_json()
         if request.method == 'GET':
             try:
@@ -97,6 +109,49 @@ def create_app(userid=None, password=None, test_config=None):
                 rc = 500
         return jsonify(result, rc)
 
+
+    # S3 routes
+    @app.route('/v1/s3')
+    def s3_list_items():
+        try:
+            contents = server_conf.s3_obj.list_files()
+            rc = 200
+        except Exception as e:
+            s_logger.error('Failed to list bucket contents: {}'.format(e))
+            rc = 500
+        return jsonify(contents, rc)
+
+    @app.route('/v1/s3/upload', methods=['POST'])
+    def s3_upload():
+        if request.method == 'POST':
+            try:
+                print(request.files)
+                f = request.files['File']
+                print(f.filename)
+                if not allowed_file(f.filename):
+                    return jsonify('file type not supported', 400)
+                #f.save(os.path.join(server_conf.s3_remote_upload_folder, f.filename))
+                server_conf.s3_obj.upload_file(
+                    f'{server_conf.s3_local_upload_folder}/{f.filename}')
+            except Exception as e:
+                s_logger.error('failed to upload file: {}'.format(e))
+                return jsonify('failed to upload file', 500)
+            return redirect("/v1/s3")
+
+    @app.route("/v1/s3/download/<file_name>", methods=['GET'])
+    def download(file_name):
+        if request.method == 'GET':
+            try:
+                ensure_dir_exists(server_conf.s3_local_download_folder)
+                output = server_conf.s3_obj.download_file(
+                    file_name, server_conf.s3_local_download_folder)
+                rc = 200
+            except Exception as e:
+                s_logger.error('Failed to list bucket contents: {}'.format(e))
+                rc = 500
+            return jsonify(output, rc)
+
+
     # TODO: use ssl/certs
     server_conf.users = {
         app.config['DEFAULT_USERID']: app.config['DEFAULT_PW']
@@ -111,5 +166,11 @@ def create_app(userid=None, password=None, test_config=None):
     server_conf.mongodb_connobj = mongodb.MongoDb(
         mongodb_url, app.config['MONGODB_DB'], app.config['MONGODB_COLLECTION']
     )
+
+    # Initialize s3 access object
+    server_conf.s3_remote_upload_folder = app.config['S3_REMOTE_UPLOAD_FOLDER']
+    server_conf.s3_local_download_folder = app.config['S3_LOCAL_DOWNLOAD_FOLDER']
+    server_conf.s3_local_upload_folder = app.config['S3_LOCAL_UPLOAD_FOLDER']
+    server_conf.s3_obj = s3_access.S3Access(app.config['S3_BUCKET'])
 
     return app
