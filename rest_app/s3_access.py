@@ -15,8 +15,10 @@ class S3Access(object):
 
     def upload_file(self, file_path, object_name=None):
         ''' upload a file to an s3 bucket '''
+        print('ENTER upload_file')
         if not object_name:
-            object_name = os.path.basename(filepath)
+            object_name = os.path.basename(file_path)
+        print('file_path:{} object_name:{}'.format(file_path, object_name))
         response = self.bucket_obj.upload_file(
                 Filename=file_path, Key=object_name)
         return response

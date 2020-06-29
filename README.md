@@ -18,6 +18,7 @@ This repo contains the source code for a Python-based REST API application that 
 │   ├── config.py
 │   ├── __init__.py
 │   ├── mongodb.py
+|   |── s3_access.py
 ├── server.py
 ├── setup.cfg
 ├── setup.py
@@ -57,12 +58,19 @@ curl -u <userid>:<pw> -H 'Content-type: application/json' -d '{"id":2, "test_key
 curl -u <userid>:<pw> -H 'Content-type: application/json' -d '{"id":3, "test_key":"test_value"}' -X POST http://127.0.0.1:10443/v1/mongodb 
 ```
 
+Sample curl commands to upload/download documents(json/text) on s3 store:
+
+```bash
+curl -u  <userid>:<pw> -XPOST -F filename=image.jpg -F File=@/tmp/uploads/test1.txt http://127.0.0.1:10443/v1/s3/upload
+```
+
+
 ## <a name="TODOs">Pending work</a>
 
-* Replace hardcoded DB or Collection entities
-* Support delete method
+* Replace hardcoded Mongodb DB or Collection entities
+* Replace hardcoded S3 Bucket name
+* Support other http methods like PUT, DELETE etc.
 * Use ssl certs or keypair based authentication
-* Add support for S3 access
 * Add support for API based credential stores
 
 

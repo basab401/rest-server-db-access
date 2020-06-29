@@ -10,7 +10,7 @@ document based DB clients to
 
 import os
 import logging
-from flask import Flask, request, jsonify, redirect, send_file
+from flask import Flask, request, jsonify, redirect
 from flask_httpauth import HTTPBasicAuth
 from rest_app import mongodb, s3_access
 
@@ -46,9 +46,9 @@ def get_pw(username):
         return server_conf.users.get(username)
     return None
 
-def allowed_file(filename):
+def allowed_file(filename, allowed_ext=[]):
     return '.' in filename and filename.rsplit(
-        '.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+        '.', 1)[1].lower() in allowed_ext
 
 def ensure_dir_exists(dir_path):
     ''' Create a direcotry path if it does not yet exist '''
@@ -128,7 +128,7 @@ def create_app(userid=None, password=None, test_config=None):
                 print(request.files)
                 f = request.files['File']
                 print(f.filename)
-                if not allowed_file(f.filename):
+                if not allowed_file(f.filename, app.config['ALLOWED_EXTENSIONS']):
                     return jsonify('file type not supported', 400)
                 #f.save(os.path.join(server_conf.s3_remote_upload_folder, f.filename))
                 server_conf.s3_obj.upload_file(
