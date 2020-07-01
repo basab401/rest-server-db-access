@@ -92,7 +92,6 @@ def create_app(userid=None, password=None, test_config=None):
 
     # Mongodb routes
     @app.route('/v1/mongodb')
-    @server_conf.auth.login_required
     def mongodb_find_all():
         rc = 200
         result = None
@@ -104,8 +103,7 @@ def create_app(userid=None, password=None, test_config=None):
                 rc = 500
         return jsonify(result, rc)
 
-    @app.route('/v1/mongodb/fetch')
-    @server_conf.auth.login_required
+    @app.route('/v1/mongodb/fetch', methods=['GET'])
     def mongodb_find_one_or_all():
         rc = 200
         result = None
@@ -136,15 +134,17 @@ def create_app(userid=None, password=None, test_config=None):
     # S3 routes
     @app.route('/v1/s3')
     def s3_list_items():
-        try:
-            contents = server_conf.s3_obj.list_files()
-            rc = 200
-        except Exception as e:
-            s_logger.error('Failed to list bucket contents: {}'.format(e))
-            rc = 500
+        if request.method == 'GET':
+            try:
+                contents = server_conf.s3_obj.list_files()
+                rc = 200
+            except Exception as e:
+                s_logger.error('Failed to list bucket contents: {}'.format(e))
+                rc = 500
         return jsonify(contents, rc)
 
     @app.route('/v1/s3/upload', methods=['POST'])
+    @server_conf.auth.login_required
     def s3_upload():
         if request.method == 'POST':
             try:
@@ -164,14 +164,19 @@ def create_app(userid=None, password=None, test_config=None):
     @app.route("/v1/s3/download/<file_name>", methods=['GET'])
     def download(file_name):
         if request.method == 'GET':
-            try:
-                ensure_dir_exists(server_conf.s3_local_download_folder)
-                output = server_conf.s3_obj.download_file(
-                    file_name, server_conf.s3_local_download_folder)
-                rc = 200
-            except Exception as e:
-                s_logger.error('Failed to list bucket contents: {}'.format(e))
-                rc = 500
+            output = None
+            if file_name not in server_conf.s3_obj.list_files():
+                s_logger.error('File {} is not available in the bucket'.format(file_name))
+                rc = 400
+            else:
+                try:
+                    ensure_dir_exists(server_conf.s3_local_download_folder)
+                    output = server_conf.s3_obj.download_file(
+                        file_name, server_conf.s3_local_download_folder)
+                    rc = 200
+                except Exception as e:
+                    s_logger.error('Failed to list bucket contents: {}'.format(e))
+                    rc = 500
             return jsonify(output, rc)
 
 
