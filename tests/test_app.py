@@ -21,9 +21,7 @@ from pytest_mock import mocker
 from rest_app import create_app, mongodb, endpoints, index_msg
 
 dummy_get_objects = [{'dummy_mult_field0': 0, 'dummy_mult_field100': 100}]
-dummy_get_object = {'dummy_field0': 0}
 dummy_post_objects = {'dummy_post_mult_field0': 1000, 'dummy_post_mult_field100': 1000}
-dummy_post_object = {'dummy_post_field0': 0}
 
 credentials = b64encode(b"test:test").decode('utf-8')
 
@@ -80,32 +78,38 @@ def client(app):
 # Test functions for rest application
 ###############################################################################
 
-def test_client_get(client):
+def test_api_index(client):
     ''' Test rest application get method '''
     response = client.get('/')
     assert json.loads(response.data)[0] == index_msg
     assert response.status_code == 200
 
+
+def test_api_endpoints(client):
+    ''' Test rest application get method '''
     response = client.get('/v1')
     assert json.loads(response.data)[0] == endpoints
     assert response.status_code == 200
 
-    response = client.get('/v1/mongodb',
+
+def test_mongodb_fetch(client):
+    ''' Test mongodb fetch method '''
+    response = client.get('/v1/mongodb/fetch',
             headers={'Authorization': f'Basic {credentials}'})
     print(json.loads(response.data)[0])
     assert json.loads(response.data)[0][0]['dummy_mult_field100'] == 100
     assert response.status_code == 200
 
 
-def test_client_post(client):
-    ''' Test rest application post method '''
+def test_mongodb_insert(client):
+    ''' Test mongodb post method '''
     mimetype = 'application/json'
     headers = {
         'Content-Type': mimetype,
         'Accept': mimetype,
         'Authorization': f'Basic {credentials}'
     }
-    response = client.post('/v1/mongodb',
+    response = client.post('/v1/mongodb/insert',
             data=json.dumps(dummy_post_objects),
             headers=headers)
     print(response)
@@ -113,9 +117,3 @@ def test_client_post(client):
     assert response.status_code == 200
     assert json.loads(response.data)[0] == 'mock_insert'
 
-
-def test_client_unauthorized(client):
-    # Test unathorized access
-    response = client.post('/v1/mongodb',
-        data=json.dumps(dummy_post_objects))
-    assert response.status_code == 401
