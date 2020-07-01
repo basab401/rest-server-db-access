@@ -33,7 +33,7 @@ class S3Access(object):
         ''' list files in a given s3 bucket '''
         contents = []
         for f in self.bucket_obj.objects.all():
-            contents.append(f)
+            contents.append(f.key)
         return contents
 
     def __enter__(self):
