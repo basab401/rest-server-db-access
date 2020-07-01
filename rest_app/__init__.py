@@ -30,6 +30,8 @@ server_conf.auth = HTTPBasicAuth()
 endpoints = {'Endpoints': [
         '/v1',
         '/v1/mongodb',
+        '/v1/mongodb/fetch',
+        '/v1/mongodb/insert',
         '/v1/s3',
         '/v1/s3/upload',
         '/v1/s3/download/{file_name}'
@@ -89,19 +91,40 @@ def create_app(userid=None, password=None, test_config=None):
 
 
     # Mongodb routes
-    @app.route('/v1/mongodb', methods=['GET', 'POST'])
+    @app.route('/v1/mongodb')
     @server_conf.auth.login_required
-    def access_mongodb():
+    def mongodb_find_all():
         rc = 200
         result = None
-        data = request.get_json()
+        if request.method == 'GET':
+            try:
+                result = server_conf.mongodb_connobj.fetch()
+            except Exception as e:
+                s_logger.error('Failed to fetch data: {}'.format(e))
+                rc = 500
+        return jsonify(result, rc)
+
+    @app.route('/v1/mongodb/fetch')
+    @server_conf.auth.login_required
+    def mongodb_find_one_or_all():
+        rc = 200
+        result = None
+        data = request.get_json() if request.get_json() else None
         if request.method == 'GET':
             try:
                 result = server_conf.mongodb_connobj.fetch(data)
             except Exception as e:
                 s_logger.error('Failed to fetch data: {}'.format(e))
                 rc = 500
-        elif request.method == 'POST':
+        return jsonify(result, rc)
+
+    @app.route('/v1/mongodb/insert', methods=['POST'])
+    @server_conf.auth.login_required
+    def mongodb_insert_doc():
+        rc = 200
+        result = None
+        data = request.get_json()
+        if request.method == 'POST':
             try:
                 result = server_conf.mongodb_connobj.insert(data)
             except Exception as e:
